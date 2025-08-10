@@ -481,7 +481,7 @@ export const CreateForm: React.FC<{ navigate: (path: string, state?: any) => voi
             startIcon={<SaveIcon />}
             onClick={handleSaveForm}
             sx={{ px: 4, py: 1.5, borderRadius: '8px' }}
-            disabled={loading || !formName.trim()} {/* Updated disabled condition */}
+            disabled={loading || !formName.trim()} 
           >
             {currentForm ? 'Update Form' : 'Save Form'}
           </Button>
