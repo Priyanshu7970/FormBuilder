@@ -6,33 +6,13 @@ import { saveFormsToLocalStorage } from "./LocalStorage";
 import { Box, Button, Card, Checkbox, Container, FormControl, IconButton, InputLabel, MenuItem, Paper, Select, TextField, Typography,CircularProgress, FormControlLabel } from "@mui/material";
 import { MessageDialog } from "./MessageDialog";
 import type {AppDispatch,RootState} from '../store'
+import type { FormConfiguration,FormField } from "../types/formTypes";
 
 import { Add as AddIcon, Delete as DeleteIcon, Visibility as VisibilityIcon, Save as SaveIcon,ArrowDownward as ArrowDownwardIcon,ArrowUpward as ArrowUpwardIcon } from '@mui/icons-material';
 
 const {setLoading, setError, addFormLocally, updateFormLocally} = formsSlice.actions;
 
-export interface FormField {
-  id: string;
-  label: string;
-  type: 'text' | 'number' | 'email' | 'checkbox' | 'radio' | 'select' | 'textarea' | 'date' | 'derived';
-  placeholder?: string;
-  required: boolean;
-  minLength?: number;
-  maxLength?: number;
-  pattern?: string;
-  options?: string[];
-  defaultValue?: string | number | boolean | null; // Added default value property
-  isDerived?: boolean; // Added for derived fields
-  parentFieldIds?: string[]; // Added for derived fields
-  formula?: string; // Added for derived fields
-}
 
-export  interface FormConfiguration {
-  id: string;
-  name: string;
-  fields: FormField[];
-  createdAt: number;
-}
 
 export const CreateForm: React.FC<{ navigate: (path: string, state?: any) => void, currentForm?: FormConfiguration | null }> = ({ navigate, currentForm }) => {
   const dispatch = useDispatch<AppDispatch>();
@@ -44,6 +24,7 @@ export const CreateForm: React.FC<{ navigate: (path: string, state?: any) => voi
   const [dialogTitle, setDialogTitle] = useState('');
   const [dialogMessage, setDialogMessage] = useState('');
 
+  // IMPORTANT FIX: Reset loading state when component mounts or currentForm changes
   useEffect(() => {
     if (currentForm) {
       setFormName(currentForm.name);
@@ -52,8 +33,10 @@ export const CreateForm: React.FC<{ navigate: (path: string, state?: any) => voi
       setFormName('');
       setFields([]);
     }
-  }, [currentForm]);
-
+    // Explicitly reset loading state. This is crucial if `loading` was left true
+    // from a previous uncompleted operation or external state change.
+    dispatch(setLoading(false));
+  }, [currentForm, dispatch]); // Added dispatch to dependency array for best practice
 
   const handleOpenDialog = (title: string, message: string) => {
     setDialogTitle(title);
@@ -79,9 +62,9 @@ export const CreateForm: React.FC<{ navigate: (path: string, state?: any) => voi
     const newFields = [...fields];
     // Special handling for options to ensure they are always an array
     if (key === 'options' && typeof value === 'string') {
-        newFields[index][key] = value.split(',').map(s => s.trim());
+      newFields[index][key] = value.split(',').map(s => s.trim()).filter(s => s !== ''); // Ensure no empty strings
     } else {
-        (newFields[index] as any)[key] = value;
+      (newFields[index] as any)[key] = value;
     }
 
     // Reset derived properties if type changes or isDerived is unchecked
@@ -128,7 +111,7 @@ export const CreateForm: React.FC<{ navigate: (path: string, state?: any) => voi
         handleOpenDialog('Validation Error', `Field "${field.label}" of type ${field.type} requires at least one option.`);
         return;
       }
-      // NEW: Validation for derived fields
+      // Validation for derived fields
       if (field.isDerived) {
         if (!field.parentFieldIds || field.parentFieldIds.length === 0) {
           handleOpenDialog('Validation Error', `Derived field "${field.label}" must have at least one parent field selected.`);
@@ -179,7 +162,7 @@ export const CreateForm: React.FC<{ navigate: (path: string, state?: any) => voi
     }
   };
 
-  // NEW: Helper to get non-derived fields for parent selection
+  // Helper to get non-derived fields for parent selection
   const getAvailableParentFields = (currentFieldId: string) => {
     return fields.filter(field => field.id !== currentFieldId && field.type !== 'derived');
   };
@@ -198,9 +181,6 @@ export const CreateForm: React.FC<{ navigate: (path: string, state?: any) => voi
           value={formName}
           onChange={(e) => {
             setFormName(e.target.value);
-            // No need to dispatch setLoading(false) here.
-            // setLoading(false) is handled in the finally block of handleSaveForm.
-            // The loading state should primarily indicate if a save operation is in progress.
           }}
           sx={{ mb: 3 }}
           required
@@ -215,7 +195,7 @@ export const CreateForm: React.FC<{ navigate: (path: string, state?: any) => voi
             <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
               <Typography variant="h6">Field {index + 1}</Typography>
               <Box>
-                {/* NEW: Reorder buttons */}
+                {/* Reorder buttons */}
                 <IconButton onClick={() => moveField(index, 'up')} disabled={index === 0 || loading}>
                   <ArrowUpwardIcon />
                 </IconButton>
@@ -247,14 +227,14 @@ export const CreateForm: React.FC<{ navigate: (path: string, state?: any) => voi
                 disabled={loading}
               >
                 <MenuItem value="text">Text</MenuItem>
-                <MenuItem value="textarea">Textarea</MenuItem> {/* NEW: Textarea type */}
+                <MenuItem value="textarea">Textarea</MenuItem>
                 <MenuItem value="number">Number</MenuItem>
                 <MenuItem value="email">Email</MenuItem>
                 <MenuItem value="checkbox">Checkbox</MenuItem>
                 <MenuItem value="radio">Radio Buttons</MenuItem>
                 <MenuItem value="select">Dropdown Select</MenuItem>
-                <MenuItem value="date">Date</MenuItem> {/* NEW: Date type */}
-                <MenuItem value="derived">Derived Field</MenuItem> {/* NEW: Derived type */}
+                <MenuItem value="date">Date</MenuItem>
+                <MenuItem value="derived">Derived Field</MenuItem>
               </Select>
             </FormControl>
 
@@ -268,7 +248,6 @@ export const CreateForm: React.FC<{ navigate: (path: string, state?: any) => voi
                   onChange={(e) => updateField(index, 'placeholder', e.target.value)}
                   sx={{ mb: 2 }}
                 />
-                {/* NEW: Default Value for text/number/email/textarea */}
                 <TextField
                   label="Default Value"
                   variant="outlined"
@@ -325,7 +304,6 @@ export const CreateForm: React.FC<{ navigate: (path: string, state?: any) => voi
 
             {(field.type === 'checkbox') && (
               <>
-                {/* NEW: Default Value for checkbox */}
                 <FormControlLabel
                   control={
                     <Checkbox
@@ -363,7 +341,6 @@ export const CreateForm: React.FC<{ navigate: (path: string, state?: any) => voi
                   helperText="e.g., Option A, Option B, Option C"
                   required
                 />
-                {/* NEW: Default Value for radio/select */}
                 <TextField
                   label="Default Value (must be one of the options)"
                   variant="outlined"
@@ -386,7 +363,7 @@ export const CreateForm: React.FC<{ navigate: (path: string, state?: any) => voi
               </>
             )}
 
-            {/* NEW: Date field configuration */}
+            {/* Date field configuration */}
             {(field.type === 'date') && (
               <>
                 <TextField
@@ -411,7 +388,7 @@ export const CreateForm: React.FC<{ navigate: (path: string, state?: any) => voi
               </>
             )}
 
-            {/* NEW: Derived field configuration */}
+            {/* Derived field configuration */}
             {field.type === 'derived' && (
               <>
                 <FormControlLabel
@@ -481,7 +458,7 @@ export const CreateForm: React.FC<{ navigate: (path: string, state?: any) => voi
             startIcon={<SaveIcon />}
             onClick={handleSaveForm}
             sx={{ px: 4, py: 1.5, borderRadius: '8px' }}
-            disabled={loading || !formName.trim()} 
+            disabled={loading || !formName.trim()}
           >
             {currentForm ? 'Update Form' : 'Save Form'}
           </Button>
