@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import type { FormConfiguration } from "../types/formTypes";
+import type { FormConfiguration, FormField } from "../types/formTypes"; // Ensure FormField is also imported for typing
 import { Box, Button, Checkbox, Container, FormControl, MenuItem, Paper, Select, TextField, Typography, FormControlLabel, RadioGroup, InputLabel, Radio } from "@mui/material";
 import { MessageDialog } from "./MessageDialog";
 
@@ -13,7 +13,8 @@ export const PreviewForm: React.FC<{ navigate: (path: string) => void, formConfi
   useEffect(() => {
     // Initialize form data with default values or empty strings
     const initialData: any = {};
-    formConfig.fields.forEach(field => {
+    // TS7006: Parameter 'field' implicitly has an 'any' type.
+    formConfig.fields.forEach((field: FormField) => {
       if (field.type === 'checkbox') {
         initialData[field.id] = false;
       } else if (field.type === 'radio' || field.type === 'select') {
@@ -50,7 +51,8 @@ export const PreviewForm: React.FC<{ navigate: (path: string) => void, formConfi
 
   const validateForm = () => {
     const errors: any = {};
-    formConfig.fields.forEach(field => {
+    // TS7006: Parameter 'field' implicitly has an 'any' type.
+    formConfig.fields.forEach((field: FormField) => {
       const value = formData[field.id];
 
       if (field.required && (value === '' || value === false || (Array.isArray(value) && value.length === 0))) {
@@ -87,101 +89,103 @@ export const PreviewForm: React.FC<{ navigate: (path: string) => void, formConfi
       handleOpenDialog('Validation Error', 'Please correct the errors in the form.');
     }
   };
- 
-   
+
   return (
     <>
-    <Container maxWidth="sm" sx={{ mt: 4 }}>
-      <Paper elevation={3} sx={{ p: 4, borderRadius: '12px' }}>
-        <Typography variant="h4" component="h2" gutterBottom align="center" sx={{ mb: 4 }}>
-          Preview: {formConfig.name}
-        </Typography>
+      <Container maxWidth="sm" sx={{ mt: 4 }}>
+        <Paper elevation={3} sx={{ p: 4, borderRadius: '12px' }}>
+          <Typography variant="h4" component="h2" gutterBottom align="center" sx={{ mb: 4 }}>
+            Preview: {formConfig.name}
+          </Typography>
 
-        <form onSubmit={handleSubmit}>
-          {formConfig.fields.map(field => (
-            <Box key={field.id} sx={{ mb: 3 }}>
-              {field.type === 'text' || field.type === 'number' || field.type === 'email' ? (
-                <TextField
-                  label={field.label}
-                  variant="outlined"
-                  fullWidth
-                  type={field.type === 'number' ? 'number' : 'text'}
-                  placeholder={field.placeholder}
-                  value={formData[field.id] || ''}
-                  onChange={(e) => handleChange(field.id, e.target.value)}
-                  required={field.required}
-                  error={!!formErrors[field.id]}
-                  helperText={formErrors[field.id]}
-                  inputProps={field.type === 'number' ? { inputMode: 'numeric', pattern: '[0-9]*' } : {}}
-                />
-              ) : field.type === 'checkbox' ? (
-                <FormControlLabel
-                  control={
-                    <Checkbox
-                      checked={formData[field.id] || false}
-                      onChange={(e) => handleChange(field.id, e.target.checked)}
-                      required={field.required}
-                    />
-                  }
-                  label={field.label}
-                />
-              ) : field.type === 'radio' ? (
-                <FormControl component="fieldset" error={!!formErrors[field.id]} required={field.required}>
-                  <Typography variant="subtitle1" component="legend" sx={{ mb: 1 }}>{field.label}{field.required ? ' *' : ''}</Typography>
-                  <RadioGroup
-                    value={formData[field.id] || ''}
-                    onChange={(e) => handleChange(field.id, e.target.value)}
-                  >
-                    {field.options?.map(option => (
-                      <FormControlLabel key={option} value={option} control={<Radio />} label={option} />
-                    ))}
-                  </RadioGroup>
-                  {formErrors[field.id] && <Typography color="error" variant="caption">{formErrors[field.id]}</Typography>}
-                </FormControl>
-              ) : field.type === 'select' ? (
-                <FormControl fullWidth variant="outlined" error={!!formErrors[field.id]} required={field.required}>
-                  <InputLabel>{field.label}</InputLabel>
-                  <Select
-                    value={formData[field.id] || ''}
-                    onChange={(e) => handleChange(field.id, e.target.value)}
+          <form onSubmit={handleSubmit}>
+            {/* TS7006: Parameter 'field' implicitly has an 'any' type. */}
+            {formConfig.fields.map((field: FormField) => (
+              <Box key={field.id} sx={{ mb: 3 }}>
+                {field.type === 'text' || field.type === 'number' || field.type === 'email' ? (
+                  <TextField
                     label={field.label}
-                  >
-                    <MenuItem value=""><em>None</em></MenuItem>
-                    {field.options?.map(option => (
-                      <MenuItem key={option} value={option}>{option}</MenuItem>
-                    ))}
-                  </Select>
-                  {formErrors[field.id] && <Typography color="error" variant="caption">{formErrors[field.id]}</Typography>}
-                </FormControl>
-              ) : null}
+                    variant="outlined"
+                    fullWidth
+                    type={field.type === 'number' ? 'number' : 'text'}
+                    placeholder={field.placeholder}
+                    value={formData[field.id] || ''}
+                    onChange={(e) => handleChange(field.id, e.target.value)}
+                    required={field.required}
+                    error={!!formErrors[field.id]}
+                    helperText={formErrors[field.id]}
+                    inputProps={field.type === 'number' ? { inputMode: 'numeric', pattern: '[0-9]*' } : {}}
+                  />
+                ) : field.type === 'checkbox' ? (
+                  <FormControlLabel
+                    control={
+                      <Checkbox
+                        checked={formData[field.id] || false}
+                        onChange={(e) => handleChange(field.id, e.target.checked)}
+                        required={field.required}
+                      />
+                    }
+                    label={field.label}
+                  />
+                ) : field.type === 'radio' ? (
+                  <FormControl component="fieldset" error={!!formErrors[field.id]} required={field.required}>
+                    <Typography variant="subtitle1" component="legend" sx={{ mb: 1 }}>{field.label}{field.required ? ' *' : ''}</Typography>
+                    <RadioGroup
+                      value={formData[field.id] || ''}
+                      onChange={(e) => handleChange(field.id, e.target.value)}
+                    >
+                      {/* TS7006: Parameter 'option' implicitly has an 'any' type. */}
+                      {field.options?.map((option: string) => (
+                        <FormControlLabel key={option} value={option} control={<Radio />} label={option} />
+                      ))}
+                    </RadioGroup>
+                    {formErrors[field.id] && <Typography color="error" variant="caption">{formErrors[field.id]}</Typography>}
+                  </FormControl>
+                ) : field.type === 'select' ? (
+                  <FormControl fullWidth variant="outlined" error={!!formErrors[field.id]} required={field.required}>
+                    <InputLabel>{field.label}</InputLabel>
+                    <Select
+                      value={formData[field.id] || ''}
+                      onChange={(e) => handleChange(field.id, e.target.value)}
+                      label={field.label}
+                    >
+                      <MenuItem value=""><em>None</em></MenuItem>
+                      {/* TS7006: Parameter 'option' implicitly has an 'any' type. */}
+                      {field.options?.map((option: string) => (
+                        <MenuItem key={option} value={option}>{option}</MenuItem>
+                      ))}
+                    </Select>
+                    {formErrors[field.id] && <Typography color="error" variant="caption">{formErrors[field.id]}</Typography>}
+                  </FormControl>
+                ) : null}
+              </Box>
+            ))}
+            <Box sx={{ display: 'flex', justifyContent: 'space-around', mt: 4 }}>
+              <Button
+                type="submit"
+                variant="contained"
+                color="primary"
+                sx={{ px: 4, py: 1.5, borderRadius: '8px' }}
+              >
+                Submit
+              </Button>
+              <Button
+                variant="outlined"
+                onClick={() => { navigate('/create') }}
+                sx={{ px: 4, py: 1.5, borderRadius: '8px' }}
+              >
+                Back to Editor
+              </Button>
             </Box>
-          ))}
-          <Box sx={{ display: 'flex', justifyContent: 'space-around', mt: 4 }}>
-            <Button
-              type="submit"
-              variant="contained"
-              color="primary"
-              sx={{ px: 4, py: 1.5, borderRadius: '8px' }}
-            >
-              Submit
-            </Button>
-            <Button
-              variant="outlined"
-              onClick={() =>{ navigate('/create')}}
-              sx={{ px: 4, py: 1.5, borderRadius: '8px' }}
-            >
-              Back to Editor
-            </Button>
-          </Box>
-        </form>
-      </Paper>
-      <MessageDialog
-        open={dialogOpen}
-        title={dialogTitle}
-        message={dialogMessage}
-        onClose={handleCloseDialog}
-      />
-  </Container>
+          </form>
+        </Paper>
+        <MessageDialog
+          open={dialogOpen}
+          title={dialogTitle}
+          message={dialogMessage}
+          onClose={handleCloseDialog}
+        />
+      </Container>
     </>
-
-    )};
+  );
+};
