@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import type {FormConfiguration} from '../App';
+import type { FormConfiguration } from "../types/formTypes";
 import { Box, Button, Checkbox, Container, FormControl, MenuItem, Paper, Select, TextField, Typography, FormControlLabel, RadioGroup, InputLabel, Radio } from "@mui/material";
 import { MessageDialog } from "./MessageDialog";
 

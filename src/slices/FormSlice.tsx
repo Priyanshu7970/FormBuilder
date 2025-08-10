@@ -1,31 +1,9 @@
 
 import { createSlice } from '@reduxjs/toolkit';
 import type  {PayloadAction}  from '@reduxjs/toolkit';
+import type { FormConfiguration,FormsState } from '../types/formTypes';
 
-interface FormField {
-  id: string;
-  label: string;
-  type: 'text' | 'number' | 'email' | 'checkbox' | 'radio' | 'select';
-  placeholder?: string;
-  required: boolean;
-  minLength?: number;
-  maxLength?: number;
-  pattern?: string; // Regex for text fields (optional)
-  options?: string[]; // For radio and select fields
-}
-interface FormConfiguration {
-  id: string;
-  // userId is no longer needed as there's no authentication
-  name: string;
-  fields: FormField[];
-  createdAt: number; // Changed from Timestamp to number (for Date.now())
-}
-interface FormsState {
-  forms: FormConfiguration[];
-  loading: boolean;
-  error: string | null;
-  // userId and isAuthReady are no longer needed
-}
+
 
 const initialFormsState: FormsState = {
   forms: [],
@@ -43,12 +21,11 @@ export const formsSlice = createSlice({
     setError: (state, action: PayloadAction<string | null>) => {
       state.error = action.payload;
     },
-    // Removed setUserId, setIsAuthReady reducers
     setForms: (state, action: PayloadAction<FormConfiguration[]>) => {
-      state.forms = action.payload.sort((a, b) => b.createdAt - a.createdAt); // Sort by number
+      state.forms = action.payload.sort((a, b) => b.createdAt - a.createdAt);
     },
     addFormLocally: (state, action: PayloadAction<FormConfiguration>) => {
-      state.forms.unshift(action.payload); // Add to the beginning for latest first
+      state.forms.unshift(action.payload);
       state.forms.sort((a, b) => b.createdAt - a.createdAt);
     },
     updateFormLocally: (state, action: PayloadAction<FormConfiguration>) => {

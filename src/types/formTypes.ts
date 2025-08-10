@@ -29,3 +29,8 @@ export interface FormConfiguration {
   fields: FormField[];
   createdAt: number;
 }
+export interface FormsState {
+  forms: FormConfiguration[];
+  loading: boolean;
+  error: string | null;
+}
